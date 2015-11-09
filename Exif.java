@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.text.DecimalFormat;
 
 public class Exif {
+	//Get big endian format long value
 	private static int getLongValue(byte[] bFile, int i) {
 		int value = 0;
 		int mask = 0xFF;
@@ -20,6 +21,7 @@ public class Exif {
 		}
 		return value;
 	}
+	// Translation degree into (d, m , s) format
 	private static double[] transDegree(double d) {
 		double degree = (double)(int)d;
 		d -= degree;
@@ -32,6 +34,7 @@ public class Exif {
 		double[] result = {degree, minute, second};
 		return result;
 	}
+	// Translate double into p / q rational format
 	private static int[] getFraction(double d) {
 		int[] fract = new int[2];
 		double[] temp = new double[2];
@@ -45,6 +48,7 @@ public class Exif {
 		fract[1] = (int)temp[1];
 		return fract;
 	}
+	// Translate long into big endian bytes
 	private static byte[] getLongBytes(int i) {
 		byte[] result = new byte[4];
 		for (int k = 0; k < 4; ++k) {
@@ -59,6 +63,7 @@ public class Exif {
 		public double latitude;
 		public char latiRef;
 	}
+	// Input check
 	private static Boolean validLocation(GpsLocation loc) {
 		if (loc.longitude >= 0.0 && loc.longitude <= 180.0) {
 			if (loc.latitude >= 0.0 && loc.latitude <= 90.0) {
@@ -75,8 +80,7 @@ public class Exif {
 		FileInputStream fileInputStream = null;
 		File file = new File(filename);
 		byte[] bFile = new byte[(int)file.length()];
-		//double[] longitude = transDegree(loc.longitude);
-		//double[] latitude = transDegree(loc.latitude);
+		// Read as byte array
 		try {
 			fileInputStream = new FileInputStream(file);
 			fileInputStream.read(bFile);
@@ -108,7 +112,6 @@ public class Exif {
 							int ifdType = ((short)(bFile[i + 3]) << 8) + (short)bFile[i + 2];
 							//Is Long type
 							if (ifdType == 4) {
-
 								int gpsOffset = ((int)(bFile[i + 11]) << 24) + ((int)(bFile[i + 10]) << 16) + ((int)(bFile[i + 9]) << 8) + ((int)bFile[i + 8] & 0xFF);
 								int gpsStart = gpsOffset + tiffHeaderStart;
 								i = gpsStart;
@@ -122,13 +125,11 @@ public class Exif {
 										if (type == 2 && count == 2) {
 											bFile[i + 8] = (byte)loc.latiRef;
 											char ref = (char)bFile[i + 8];
-											//System.out.println(ref);
 										}
 									} else if (tagid == 2) {
 										if (type == 5 && count == 3) {
 											int offset = getLongValue(bFile, i + 8);
 											int degreeStart = tiffHeaderStart + offset;
-											//int temp = degreeStart;
 											double[] latitude = transDegree(loc.latitude);
 											for (int x = 0; x < 3; ++x) {
 												int[] ration = getFraction(latitude[x]);
@@ -140,27 +141,17 @@ public class Exif {
 													degreeStart += 4;
 												}
 											}
-											/*degreeStart = temp;
-											double[] degrees = new double[3];
-											for (int x = 0; x < 3; ++x) {
-												int numer = getLongValue(bFile, degreeStart);
-												int denom = getLongValue(bFile, degreeStart + 4);
-												degrees[x] = (double)numer / (double)denom;
-												System.out.println(degrees[x]);
-												degreeStart += 8;
-											}*/
+
 										}
 									} else if (tagid == 3) {
 										if (type == 2 && count == 2) {
 											bFile[i + 8] = (byte)loc.longRef;
 											char ref = (char)bFile[i + 8];
-											//System.out.println(ref);
 										}
 									} else if (tagid == 4) {
 										if (type == 5 && count == 3) {
 											int offset = getLongValue(bFile, i + 8);
 											int degreeStart = tiffHeaderStart + offset;
-											// int temp = degreeStart;
 											double[] longitude = transDegree(loc.longitude);
 											for (int x = 0; x < 3; ++x) {
 												int[] ration = getFraction(longitude[x]);
@@ -172,15 +163,7 @@ public class Exif {
 													degreeStart += 4;
 												}
 											}
-											/*degreeStart = temp;
-											double[] degrees = new double[3];
-											for (int x = 0; x < 3; ++x) {
-												int numer = getLongValue(bFile, degreeStart);
-												int denom = getLongValue(bFile, degreeStart + 4);
-												degrees[x] = (double)numer / (double)denom;
-												System.out.println(degrees[x]);
-												degreeStart += 8;
-											}*/
+											
 										}
 									}
 									i += 12;
